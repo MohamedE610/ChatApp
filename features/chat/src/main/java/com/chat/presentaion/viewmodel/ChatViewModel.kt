@@ -39,6 +39,8 @@ class ChatViewModel @Inject constructor(
                     if (it is ConnectionStatus.Connected) {
                         loadHistory()
                         receiveMessage()
+                    } else {
+                        _screenState.value = ChatState.Error(ChatException.ConnectionFailed)
                     }
                 }
         }
