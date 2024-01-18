@@ -18,7 +18,12 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField("String", "WEB_SOCKET_URL", "\"wss://socketsbay.com/wss/v2/1/demo/\"")
+        }
+
         release {
+            buildConfigField("String", "WEB_SOCKET_URL", "\"wss://socketsbay.com/wss/v2/1/demo/\"")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -32,6 +37,9 @@ android {
     }
     kotlinOptions {
         jvmTarget = "1.8"
+    }
+    buildFeatures {
+        buildConfig = true
     }
 }
 
@@ -67,14 +75,9 @@ dependencies {
 
     //room
     api("androidx.room:room-runtime:2.6.1")
+    api("androidx.room:room-ktx:2.6.1")
     annotationProcessor("androidx.room:room-compiler:2.6.1")
     ksp("androidx.room:room-compiler:2.6.1")
-
-
-    //retrofit2
-    api("com.squareup.retrofit2:retrofit:2.9.0")
-    api("com.squareup.retrofit2:converter-gson:2.9.0")
-    api("com.squareup.okhttp3:logging-interceptor:4.9.2")
 
     //hilt
     api("com.google.dagger:hilt-android:2.48")
@@ -89,11 +92,8 @@ dependencies {
     //fragmentKTX
     api("androidx.fragment:fragment-ktx:1.6.2")
 
-    //glide
-    api("com.github.bumptech.glide:glide:4.13.2")
-
-    //facebook shimmer
-    api("com.facebook.shimmer:shimmer:0.5.0")
+    //web socket
+    api("dev.gustavoavila:java-android-websocket-client:2.0.2")
 
     //chucker
     debugImplementation("com.github.chuckerteam.chucker:library:3.5.2")
