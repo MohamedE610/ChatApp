@@ -42,7 +42,7 @@ class ChatRemoteDataSource @Inject constructor(
                             Log.d("chat_tag", "message received -> $message")
                             val msg = Message(
                                 id = generateRandomId(),
-                                text = message ?: "",
+                                text = message?.trim() ?: "",
                                 dateTime = Date().time
                             )
                             messageReceivedFlow.tryEmit(msg)
@@ -85,11 +85,12 @@ class ChatRemoteDataSource @Inject constructor(
     }
 
     fun sendMessage(msg: String): Flow<Message> {
-        webSocketClient?.send(msg)
+        webSocketClient?.send(msg.trim())
         val message = Message(
             id = generateRandomId(),
-            text = msg,
-            dateTime = Date().time
+            text = msg.trim(),
+            dateTime = Date().time,
+            senderId = "Me"
         )
         Log.d("chat_tag", "sendMessage -> $msg")
         return emitFlow { message }.flowOn(coroutineDispatcher)
