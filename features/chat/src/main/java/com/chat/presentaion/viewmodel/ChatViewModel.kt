@@ -28,7 +28,6 @@ class ChatViewModel @Inject constructor(
         connect()
     }
 
-    //Test callbackFlow behavior
     private fun connect() {
         _screenState.value = ChatState.Loading
         viewModelScope.launch {
@@ -37,7 +36,6 @@ class ChatViewModel @Inject constructor(
                 .collect {
                     Log.d("chat_tag", "UI:$it")
                     connectionStatus = it
-                    _screenState.value = it.map()
                     if (it is ConnectionStatus.Connected) {
                         loadHistory()
                         receiveMessage()
@@ -101,19 +99,9 @@ class ChatViewModel @Inject constructor(
 sealed class ChatState {
     data object Initial : ChatState()
     data object Loading : ChatState()
-    data object ClientConnected : ChatState()
-    data object ClientDisconnected : ChatState()
     data class HistoryLoaded(val date: List<Message>) : ChatState()
     data object NoHistoryCached : ChatState()
     class MessageSent(val date: List<Message>) : ChatState()
     class MessageReceived(val date: List<Message>) : ChatState()
     data class Error(val ex: ChatException) : ChatState()
-}
-
-private fun ConnectionStatus.map(): ChatState {
-    return when (this) {
-        is ConnectionStatus.Connected -> ChatState.ClientConnected
-        is ConnectionStatus.Disconnected -> ChatState.ClientDisconnected
-        is ConnectionStatus.Failed -> ChatState.Error(ChatException.ConnectionFailed)
-    }
 }
