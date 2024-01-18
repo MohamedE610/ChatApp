@@ -9,6 +9,6 @@ interface ChatRepository {
     suspend fun loadHistory(): Flow<List<Message>>
     suspend fun sendMessage(msg: String): Flow<Message>
     suspend fun receiveMessage(): Flow<Message>
-    suspend fun clearCache()
+    suspend fun invalidateCache()
     suspend fun disconnect()
 }

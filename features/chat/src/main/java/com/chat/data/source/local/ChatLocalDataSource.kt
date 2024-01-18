@@ -17,7 +17,7 @@ class ChatLocalDataSource @Inject constructor(
         messageDao.saveMessage(msg)
     }
 
-    suspend fun clearCache() {
-        messageDao.deleteAll()
+    suspend fun invalidateCache() {
+        messageDao.invalidateCache()
     }
 }

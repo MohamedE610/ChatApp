@@ -25,8 +25,8 @@ class ChatInterActor @Inject constructor(
         return repository.receiveMessage()
     }
 
-    suspend fun clearCache() {
-        repository.clearCache()
+    suspend fun invalidateCache() {
+        repository.invalidateCache()
     }
 
     suspend fun disconnect() {

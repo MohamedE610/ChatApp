@@ -49,9 +49,9 @@ class ChatRepositoryImpl @Inject constructor(
         return emitFlow { msg }
     }
 
-    override suspend fun clearCache() {
+    override suspend fun invalidateCache() {
         withContext(coroutineDispatcher) {
-            localDataSource.clearCache()
+            localDataSource.invalidateCache()
         }
     }
 
