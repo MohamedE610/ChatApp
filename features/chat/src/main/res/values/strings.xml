@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="lbl_there_no_messages">Enter your first message</string>
+    <string name="lbl_send_msg_hint">Type a message</string>
+    <string name="lbl_chat_demo">Chat demo</string>
+</resources>
