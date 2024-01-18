@@ -88,7 +88,6 @@ dependencies {
 
     //work
     api("androidx.work:work-runtime-ktx:2.9.0")
-    api("androidx.work:work-rxjava3:2.9.0")
 
     //fragmentKTX
     api("androidx.fragment:fragment-ktx:1.6.2")
