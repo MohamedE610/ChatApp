@@ -6,16 +6,14 @@ import com.chat.entity.Message
 import com.core.constant.IO_DISPATCHER_KEY
 import com.core.constant.WEB_SOCKET_URL_KEY
 import com.core.extension.emitFlow
+import dev.gustavoavila.websocketclient.WebSocketClient
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flowOn
-import org.java_websocket.client.WebSocketClient
-import org.java_websocket.handshake.ServerHandshake
 import java.net.URI
 import java.util.Date
 import java.util.UUID
@@ -27,53 +25,67 @@ class ChatRemoteDataSource @Inject constructor(
     @Named(IO_DISPATCHER_KEY) private val coroutineDispatcher: CoroutineDispatcher
 ) {
 
-    private var webSocket: WebSocketClient? = null
+    private var webSocketClient: WebSocketClient? = null
     private val messageReceivedFlow = MutableSharedFlow<Message>(replay = 1)
 
     fun connect(): Flow<ConnectionStatus> {
         return callbackFlow {
             try {
-                webSocket = object : WebSocketClient(URI(url)) {
-                    override fun onOpen(handshakedata: ServerHandshake?) {
-                        Log.d("chat_tag", "connected")
-                        trySend(ConnectionStatus.Connected)
+                if (webSocketClient == null)
+                    webSocketClient = object : WebSocketClient(URI(url)) {
+                        override fun onOpen() {
+                            Log.d("chat_tag", "connected")
+                            trySend(ConnectionStatus.Connected)
+                        }
+
+                        override fun onTextReceived(message: String?) {
+                            Log.d("chat_tag", "message received -> $message")
+                            val msg = Message(
+                                id = generateRandomId(),
+                                text = message ?: "",
+                                dateTime = Date().time
+                            )
+                            messageReceivedFlow.tryEmit(msg)
+                        }
+
+                        override fun onBinaryReceived(data: ByteArray?) {
+                            Log.d("chat_tag", "onBinaryReceived")
+                        }
+
+                        override fun onPingReceived(data: ByteArray?) {
+                            Log.d("chat_tag", "onPingReceived")
+                        }
+
+                        override fun onPongReceived(data: ByteArray?) {
+                            Log.d("chat_tag", "onPongReceived")
+                        }
+
+                        override fun onException(ex: Exception?) {
+                            Log.d("chat_tag", "failed, ex-> ${ex?.message}")
+                            trySend(ConnectionStatus.Failed(ex ?: return))
+                        }
+
+                        override fun onCloseReceived(reason: Int, description: String?) {
+                            Log.d("chat_tag", "disconnected")
+                            trySend(ConnectionStatus.Disconnected)
+                        }
+
                     }
 
-                    override fun onMessage(message: String?) {
-                        Log.d("chat_tag", "message received -> $message")
-                        val msg = Message(
-                            id = generateRandomId(),
-                            text = message ?: "",
-                            dateTime = Date().time
-                        )
-                        messageReceivedFlow.tryEmit(msg)
-                    }
-
-                    override fun onClose(code: Int, reason: String?, remote: Boolean) {
-                        Log.d("chat_tag", "disconnected")
-                        trySend(ConnectionStatus.Disconnected)
-                        cancel()
-                    }
-
-                    override fun onError(ex: Exception?) {
-                        Log.d("chat_tag", "failed, ex-> ${ex?.message}")
-                        trySend(ConnectionStatus.Failed(ex ?: return))
-                        cancel()
-                    }
-
-                }
-                webSocket?.connect()
+                webSocketClient?.setConnectTimeout(CONNECTING_TIMEOUT)
+                webSocketClient?.setReadTimeout(CONNECTION_LOST_TIMEOUT)
+                webSocketClient?.enableAutomaticReconnection(WAIT_TIME_BEFORE_RECONNECTING)
+                webSocketClient?.connect()
             } catch (e: Exception) {
                 e.printStackTrace()
                 trySend(ConnectionStatus.Failed(e))
-                cancel()
             }
             awaitClose()
         }.flowOn(coroutineDispatcher)
     }
 
     fun sendMessage(msg: String): Flow<Message> {
-        webSocket?.send(msg)
+        webSocketClient?.send(msg)
         val message = Message(
             id = generateRandomId(),
             text = msg,
@@ -92,7 +104,11 @@ class ChatRemoteDataSource @Inject constructor(
     }
 
     fun disconnect() {
-        webSocket?.close()
-        webSocket = null
+        webSocketClient?.close(0, 0, "")
+        webSocketClient = null
     }
 }
+
+private const val CONNECTING_TIMEOUT = 10 * 1000
+private const val CONNECTION_LOST_TIMEOUT = 2 * 60 * 1000
+private const val WAIT_TIME_BEFORE_RECONNECTING: Long = 2000
