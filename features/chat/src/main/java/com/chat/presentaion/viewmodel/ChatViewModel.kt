@@ -22,6 +22,7 @@ class ChatViewModel @Inject constructor(
     private val _screenState: MutableStateFlow<ChatState> by lazy { MutableStateFlow(ChatState.Initial) }
     val screenState: StateFlow<ChatState> = _screenState
     private var connectionStatus: ConnectionStatus = ConnectionStatus.Disconnected
+    private val messages = arrayListOf<Message>()
 
     init {
         connect()
@@ -51,10 +52,11 @@ class ChatViewModel @Inject constructor(
             interActor.loadHistory()
                 .catch { ChatState.Error(it.toChatException()) }
                 .collect {
+                    cacheMessages(it)
                     if (it.isEmpty())
                         _screenState.value = ChatState.NoHistoryCached
                     else
-                        _screenState.value = ChatState.HistoryLoaded(it)
+                        _screenState.value = ChatState.HistoryLoaded(it.reversed())
                 }
         }
     }
@@ -64,7 +66,8 @@ class ChatViewModel @Inject constructor(
             interActor.sendMessage(msg)
                 .catch { ChatState.Error(it.toChatException()) }
                 .collect {
-                    _screenState.value = ChatState.MessageSent(it)
+                    cacheMessage(it)
+                    _screenState.value = ChatState.MessageSent(messages.reversed())
                 }
         }
     }
@@ -74,9 +77,19 @@ class ChatViewModel @Inject constructor(
             interActor.receiveMessage()
                 .catch { ChatState.Error(it.toChatException()) }
                 .collect {
-                    _screenState.value = ChatState.MessageReceived(it)
+                    cacheMessage(it)
+                    _screenState.value = ChatState.MessageReceived(messages.reversed())
                 }
         }
+    }
+
+    private fun cacheMessages(it: List<Message>) {
+        messages.clear()
+        messages.addAll(it)
+    }
+
+    private fun cacheMessage(it: Message) {
+        messages.add(it)
     }
 
     override fun onCleared() {
@@ -92,8 +105,8 @@ sealed class ChatState {
     data object ClientDisconnected : ChatState()
     data class HistoryLoaded(val date: List<Message>) : ChatState()
     data object NoHistoryCached : ChatState()
-    data class MessageSent(val msg: Message) : ChatState()
-    data class MessageReceived(val msg: Message) : ChatState()
+    class MessageSent(val date: List<Message>) : ChatState()
+    class MessageReceived(val date: List<Message>) : ChatState()
     data class Error(val ex: ChatException) : ChatState()
 }
 
