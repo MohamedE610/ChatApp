@@ -45,7 +45,6 @@ class ChatRepositoryImpl @Inject constructor(
 
     private suspend fun cacheMessage(msg: Message): Flow<Message> {
         localDataSource.saveMessage(msg.map())
-        Log.d("chat_teg", "msg saved -> `${msg.text}")
         return emitFlow { msg }
     }
 
