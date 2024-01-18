@@ -29,6 +29,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -57,6 +59,7 @@ import com.chat.entity.Message
 import com.chat.entity.isMe
 import com.chat.presentaion.viewmodel.ChatState
 import com.chat.presentaion.viewmodel.ChatViewModel
+import com.core.exception.getMessageShouldDisplay
 import com.core.extension.formatDateToHhMm
 import kotlinx.coroutines.launch
 
@@ -64,11 +67,19 @@ import kotlinx.coroutines.launch
 fun ChatScreen(
     viewModel: ChatViewModel = viewModel()
 ) {
+    val snackbarHostState = remember { SnackbarHostState() }
     val state by viewModel.screenState.collectAsStateWithLifecycle()
     Scaffold(
         modifier = Modifier.background(Color.White),
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = { ChatTopBar() },
-        content = { ChatContent(state = state, paddingValues = it) },
+        content = {
+            ChatContent(
+                state = state,
+                paddingValues = it,
+                snackbarHostState = snackbarHostState
+            )
+        },
         bottomBar = { ChatBottomBar(sendMsg = { msg -> viewModel.sendMessage(msg) }) }
     )
 }
@@ -117,9 +128,13 @@ fun ChatTopBar() {
 @Composable
 fun ChatContent(
     state: ChatState,
-    paddingValues: PaddingValues
+    paddingValues: PaddingValues,
+    snackbarHostState: SnackbarHostState
 ) {
+    val context = LocalContext.current
+
     when (state) {
+        is ChatState.Loading -> Loading()
         is ChatState.HistoryLoaded -> MessageList(
             list = state.date,
             paddingValues = paddingValues
@@ -136,9 +151,12 @@ fun ChatContent(
             scrollToEnd = true
         )
 
-        is ChatState.Loading -> Loading()
         is ChatState.NoHistoryCached -> EmptyView(message = stringResource(id = R.string.lbl_there_no_messages))
-        else -> Loading()
+        is ChatState.Error -> LaunchedEffect(snackbarHostState) {
+            snackbarHostState.showSnackbar(message = state.ex.getMessageShouldDisplay(context))
+        }
+
+        is ChatState.Initial -> Unit
     }
 }
 
