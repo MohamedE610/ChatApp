@@ -15,6 +15,6 @@ interface MessagesDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun saveMessage(msg: MessageEntity)
 
-    @Query("DELETE FROM ${RoomConstants.TABLE_NAME}")
-    suspend fun deleteAll(): Int
+    @Query("DELETE FROM ${RoomConstants.TABLE_NAME} where id NOT IN (SELECT id from ${RoomConstants.TABLE_NAME} ORDER BY id ASC LIMIT 200)")
+    suspend fun invalidateCache(): Int
 }
