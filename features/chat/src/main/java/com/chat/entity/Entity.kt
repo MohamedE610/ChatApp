@@ -9,5 +9,8 @@ sealed class ConnectionStatus {
 data class Message(
     val id: String,
     val text: String,
-    val dateTime: Long
+    val dateTime: Long,
+    val senderId: String? = null
 )
+
+fun Message.isMe(): Boolean = senderId != null

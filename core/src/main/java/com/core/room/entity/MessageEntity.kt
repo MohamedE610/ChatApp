@@ -13,5 +13,7 @@ data class MessageEntity(
     @ColumnInfo("text")
     val text: String,
     @ColumnInfo("dateTime")
-    val dateTime: Long
+    val dateTime: Long,
+    @ColumnInfo("senderId")
+    val senderId: String? = null
 )

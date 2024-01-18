@@ -7,7 +7,8 @@ fun MessageEntity.map(): Message {
     return Message(
         id = id,
         text = text,
-        dateTime = dateTime
+        dateTime = dateTime,
+        senderId = senderId
     )
 }
 
@@ -15,6 +16,7 @@ fun Message.map(): MessageEntity {
     return MessageEntity(
         id = id,
         text = text,
-        dateTime = dateTime
+        dateTime = dateTime,
+        senderId = senderId
     )
 }
